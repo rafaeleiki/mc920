@@ -4,47 +4,57 @@ import numpy as np
 
 class ImageFilter:
 
-    def filter(self, matrix, input_file, output_file):
+    @staticmethod
+    def filter(matrix, input_file, output_file):
         img_file = cv2.imread(input_file)
         new_img = cv2.filter2D(img_file, -1, matrix)
         cv2.imwrite(output_file, new_img)
-        print(f"Arquivo '{output_file}' escrito")
+        ImageFilter.__log_file_creation(output_file)
 
-    def filter_a(self):
+    @staticmethod
+    def filter_a(input_file, output_file):
         matrix = [[0,  0, -1,  0, 0],
                   [0, -1, -2, -1, 0],
                   [-1, -2, 16, -2, -1],
                   [0, -1, -2, -1, 0],
                   [0,  0, -1,  0, 0]]
         matrix = np.array(matrix)
-        self.filter(matrix, "../pictures/city.png", "./results/city_a.png")
+        ImageFilter.filter(matrix, input_file, output_file)
 
-    def filter_b(self):
+    @staticmethod
+    def filter_b(input_file, output_file):
         matrix = [[1,  4, 6,  4, 1],
                   [4, 16, 24, 16, 4],
                   [6, 24, 36, 24, 6],
                   [4, 16, 24, 16, 4],
                   [1,  4, 6,  4, 1]]
         matrix = np.array(matrix) / 256
-        self.filter(matrix, "../pictures/city.png", "./results/city_b.png")
+        ImageFilter.filter(matrix, input_file, output_file)
 
-    def filter_c(self):
+    @staticmethod
+    def filter_c(input_file, output_file):
         matrix = [[-1, 0, 1],
                   [-2, 0, 2],
                   [-1, 0, 1]]
         matrix = np.array(matrix)
-        self.filter(matrix, "../pictures/city.png", "./results/city_c.png")
+        ImageFilter.filter(matrix, input_file, output_file)
 
-    def filter_d(self):
+    @staticmethod
+    def filter_d(input_file, output_file):
         matrix = [[-1, -2, -1],
                   [0, 0, 0],
                   [1, 2, 1]]
         matrix = np.array(matrix)
-        self.filter(matrix, "../pictures/city.png", "./results/city_d.png")
+        ImageFilter.filter(matrix, input_file, output_file)
 
-    def filter_c_d(self):
-        img_file_c = np.float32(cv2.imread("./results/city_c.png"))
-        img_file_d = np.float32(cv2.imread("./results/city_d.png"))
+    @staticmethod
+    def filter_c_d(file_1, file_2, output_file):
+        img_file_c = np.float32(cv2.imread(file_1))
+        img_file_d = np.float32(cv2.imread(file_2))
         square = np.square(img_file_c) + np.square(img_file_d)
-        cv2.imwrite("./results/city_c_d.png", np.sqrt(square))
-        print("Arquivo './results/city_c_d.png' escrito")
+        cv2.imwrite(output_file, np.sqrt(square))
+        ImageFilter.__log_file_creation(output_file)
+
+    @staticmethod
+    def __log_file_creation(file):
+        print(f"Arquivo '{file}' escrito")
