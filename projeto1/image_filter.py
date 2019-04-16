@@ -5,24 +5,23 @@ import numpy as np
 class ImageFilter:
 
     @staticmethod
-    def filter(matrix, input_file, output_file):
+    def __normalize_image_if_required(image, normalize):
         """
-        Cria uma imagem, usando a matriz como base para o filtro.
-        :param matrix: matriz a ser usada para o filtro
-        :param input_file: arquivo de entrada
-        :param output_file: arquivo de saída
+        Normaliza e escreve uma imagem
+        :param image: imagem a ser desenhada no arquivo
         """
-        img_file = cv2.imread(input_file)
-        new_img = cv2.filter2D(img_file, -1, matrix)
-        cv2.imwrite(output_file, new_img)
-        ImageFilter.__log_file_creation(output_file)
+        if normalize:
+            scale = 255.0 / image.max()
+            image = scale * image
+        return image
 
     @staticmethod
-    def filter_a(input_file, output_file):
+    def filter_a(image, normalize=True):
         """
         Filtra uma imagem
-        :param input_file: arquivo de entrada
-        :param output_file: arquivo de saída
+        :param image: imagem a ser filtrada
+        :param normalize: indica se a imagem deve ser normalizada. Por padrão, ela é normalizada.
+        :return: imagem filtrada, podendo estar normalizada no intervalo de 0 a 255
         """
         matrix = [[0,  0, -1,  0, 0],
                   [0, -1, -2, -1, 0],
@@ -30,14 +29,16 @@ class ImageFilter:
                   [0, -1, -2, -1, 0],
                   [0,  0, -1,  0, 0]]
         matrix = np.array(matrix)
-        ImageFilter.filter(matrix, input_file, output_file)
+        new_image = cv2.filter2D(image, -1, matrix)
+        return ImageFilter.__normalize_image_if_required(new_image, normalize)
 
     @staticmethod
-    def filter_b(input_file, output_file):
+    def filter_b(image, normalize=True):
         """
         Filtra uma imagem
-        :param input_file: arquivo de entrada
-        :param output_file: arquivo de saída
+        :param image: imagem a ser filtrada
+        :param normalize: indica se a imagem deve ser normalizada. Por padrão, ela é normalizada.
+        :return: imagem filtrada, podendo estar normalizada no intervalo de 0 a 255
         """
         matrix = [[1,  4, 6,  4, 1],
                   [4, 16, 24, 16, 4],
@@ -45,51 +46,48 @@ class ImageFilter:
                   [4, 16, 24, 16, 4],
                   [1,  4, 6,  4, 1]]
         matrix = np.array(matrix) / 256
-        ImageFilter.filter(matrix, input_file, output_file)
+        new_image = cv2.filter2D(image, -1, matrix)
+        return ImageFilter.__normalize_image_if_required(new_image, normalize)
 
     @staticmethod
-    def filter_c(input_file, output_file):
+    def filter_c(image, normalize=True):
         """
         Filtra uma imagem
-        :param input_file: arquivo de entrada
-        :param output_file: arquivo de saída
+        :param image: imagem a ser filtrada
+        :param normalize: indica se a imagem deve ser normalizada. Por padrão, ela é normalizada.
+        :return: imagem filtrada, podendo estar normalizada no intervalo de 0 a 255
         """
         matrix = [[-1, 0, 1],
                   [-2, 0, 2],
                   [-1, 0, 1]]
         matrix = np.array(matrix)
-        ImageFilter.filter(matrix, input_file, output_file)
+        new_image = cv2.filter2D(image, -1, matrix)
+        return ImageFilter.__normalize_image_if_required(new_image, normalize)
 
     @staticmethod
-    def filter_d(input_file, output_file):
+    def filter_d(image, normalize=True):
         """
         Filtra uma imagem
-        :param input_file: arquivo de entrada
-        :param output_file: arquivo de saída
+        :param image: imagem a ser filtrada
+        :param normalize: indica se a imagem deve ser normalizada. Por padrão, ela é normalizada.
+        :return: imagem filtrada, podendo estar normalizada no intervalo de 0 a 255
         """
         matrix = [[-1, -2, -1],
                   [0, 0, 0],
                   [1, 2, 1]]
         matrix = np.array(matrix)
-        ImageFilter.filter(matrix, input_file, output_file)
+        new_image = cv2.filter2D(image, -1, matrix)
+        return ImageFilter.__normalize_image_if_required(new_image, normalize)
 
     @staticmethod
-    def filter_c_d(file_1, file_2, output_file):
+    def filter_c_d(image, normalize=True):
         """
         Filtra uma imagem
-        :param input_file: arquivo de entrada
-        :param output_file: arquivo de saída
+        :param image: imagem a ser filtrada
+        :param normalize: indica se a imagem deve ser normalizada. Por padrão, ela é normalizada.
+        :return: imagem filtrada, podendo estar normalizada no intervalo de 0 a 255
         """
-        img_file_c = np.float32(cv2.imread(file_1))
-        img_file_d = np.float32(cv2.imread(file_2))
-        square = np.square(img_file_c) + np.square(img_file_d)
-        cv2.imwrite(output_file, np.sqrt(square))
-        ImageFilter.__log_file_creation(output_file)
-
-    @staticmethod
-    def __log_file_creation(file):
-        """
-        Realiza o log da criação dos arquivos de imagem filtrados
-        :param file: nome do arquivo que foi criado
-        """
-        print(f"Arquivo '{file}' escrito")
+        image_c = ImageFilter.filter_c(image, False)
+        image_d = ImageFilter.filter_d(image, False)
+        new_image = np.sqrt(np.square(image_c) + np.square(image_d))
+        return ImageFilter.__normalize_image_if_required(new_image, normalize)
