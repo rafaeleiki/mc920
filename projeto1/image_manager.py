@@ -8,7 +8,7 @@ class ImageManager:
 
     @staticmethod
     def create_filtered_image(filter_type, input_file, output_file='./results'):
-        image = np.float32(cv2.imread(input_file))
+        image = np.float32(cv2.imread(input_file, 0))
 
         if filter_type == 'all':
             ImageManager.__create_all_filtered_images(input_file, output_file, image)
@@ -17,16 +17,18 @@ class ImageManager:
 
     @staticmethod
     def __create_specific_filter(filter_type, image, output_file):
-        if filter_type == 'a':
-            image = ImageFilter.filter_a(image)
-        elif filter_type == 'b':
-            image = ImageFilter.filter_b(image)
-        elif filter_type == 'c':
-            image = ImageFilter.filter_b(image)
-        elif filter_type == 'd':
-            image = ImageFilter.filter_b(image)
-        elif filter_type == 'c+d':
-            image = ImageFilter.filter_c_d(image)
+        if filter_type == 'h1':
+            image = ImageFilter.filter_h1(image)
+        elif filter_type == 'h2':
+            image = ImageFilter.filter_h2(image)
+        elif filter_type == 'h3':
+            image = ImageFilter.filter_h3(image)
+        elif filter_type == 'h4':
+            image = ImageFilter.filter_h4(image)
+        elif filter_type == 'h3_h4':
+            image = ImageFilter.filter_h3_h4(image)
+        elif filter_type == 'g':
+            image = ImageFilter.filter_gaussian(image)
 
         cv2.imwrite(output_file, image)
 
@@ -40,8 +42,9 @@ class ImageManager:
         extension = filename_parts[-1]
 
         # Gera as imagens com cada um dos filtros
-        cv2.imwrite(f"{out_dir}/{base}_a{extension}", ImageFilter.filter_a(image))
-        cv2.imwrite(f"{out_dir}/{base}_b{extension}", ImageFilter.filter_b(image))
-        cv2.imwrite(f"{out_dir}/{base}_c{extension}", ImageFilter.filter_c(image))
-        cv2.imwrite(f"{out_dir}/{base}_d{extension}", ImageFilter.filter_d(image))
-        cv2.imwrite(f"{out_dir}/{base}_c_d{extension}", ImageFilter.filter_c_d(image))
+        cv2.imwrite(f"{out_dir}/{base}_h1{extension}", ImageFilter.filter_h1(image))
+        cv2.imwrite(f"{out_dir}/{base}_h2{extension}", ImageFilter.filter_h2(image))
+        cv2.imwrite(f"{out_dir}/{base}_h3{extension}", ImageFilter.filter_h3(image))
+        cv2.imwrite(f"{out_dir}/{base}_h4{extension}", ImageFilter.filter_h4(image))
+        cv2.imwrite(f"{out_dir}/{base}_h3_h4{extension}", ImageFilter.filter_h3_h4(image))
+        cv2.imwrite(f"{out_dir}/{base}_g{extension}", ImageFilter.filter_gaussian(image))
