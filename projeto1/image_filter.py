@@ -91,7 +91,7 @@ class ImageFilter:
         return ImageFilter.__normalize_image(new_image)
 
     @staticmethod
-    def filter_gaussian(image, sigma=30):
+    def filter_gaussian(image, sigma):
         # Calcula a transformada e translada a faixa-zero para o centro
         fourier = np.fft.fft2(image)
         fourier_translated = np.fft.fftshift(fourier)
