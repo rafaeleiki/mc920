@@ -3,12 +3,13 @@ from image_manager import ImageManager
 
 
 def generate_example():
-    ImageManager.create_dithering('../pictures/baboon.png', './results/', 'all', 'baboon')
-    ImageManager.create_dithering('../pictures/poney.png', './results/', 'all', 'poney')
-    ImageManager.create_dithering('../pictures/butterfly.png', './results/', 'all', 'butterfly')
-    ImageManager.create_dithering('../pictures/city.png', './results/', 'all', 'city')
-    ImageManager.create_dithering('../pictures/house.png', './results/', 'all', 'house')
-    ImageManager.create_dithering('../pictures/seagull.png', './results/', 'all', 'seagull')
+    ImageManager.create_dithering('../pictures/baboon.pgm', './results/', 'all', 'baboon')
+    ImageManager.create_dithering('../pictures/fiducial.pgm', './results/', 'all', 'fiducial')
+    ImageManager.create_dithering('../pictures/monarch.pgm', './results/', 'all', 'monarch')
+    ImageManager.create_dithering('../pictures/peppers.pgm', './results/', 'all', 'peppers')
+    ImageManager.create_dithering('../pictures/retina.pgm', './results/', 'all', 'retina')
+    ImageManager.create_dithering('../pictures/sonnet.pgm', './results/', 'all', 'sonnet')
+    ImageManager.create_dithering('../pictures/wedge.pgm', './results/', 'all', 'wedge')
 
 
 def main():

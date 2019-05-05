@@ -14,9 +14,11 @@ class ImageManager:
             if type == 'bayer':
                 new_image = Dithering.ordered_dithering_bayer(image)
             elif type == 'ordered_dithering':
-                new_image = Dithering.ordered_dithering_bayer(image)
+                new_image = Dithering.ordered_dithering(image)
             elif type == 'floyd_steinberg':
-                new_image = Dithering.ordered_dithering_bayer(image)
+                new_image = Dithering.floyd_steinberg(image, False)
+            elif type == 'floyd_steinberg_alternate':
+                new_image = Dithering.floyd_steinberg(image, True)
 
             ImageManager.write_pbm_file(new_image, output_file_path)
 
@@ -28,8 +30,11 @@ class ImageManager:
         new_image = Dithering.ordered_dithering(image)
         ImageManager.write_pbm_file(new_image, output_dir + filename + '_ordered_dithering.pbm')
 
-        new_image = Dithering.floyd_steinberg(image)
+        new_image = Dithering.floyd_steinberg(image, False)
         ImageManager.write_pbm_file(new_image, output_dir + filename + '_floyd_steinberg.pbm')
+
+        new_image = Dithering.floyd_steinberg(image, True)
+        ImageManager.write_pbm_file(new_image, output_dir + filename + '_floyd_steinberg_alternate.pbm')
 
     @staticmethod
     def write_pbm_file(image, output_path):
