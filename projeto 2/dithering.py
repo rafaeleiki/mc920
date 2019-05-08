@@ -5,13 +5,23 @@ class Dithering:
 
     @staticmethod
     def floyd_steinberg(image, alternate=True, threshold=128):
-        (height, width) = image.shape
+        """
+        Aplica a técnica de pontilhado por difusão de erro de Floyd-Steinberg
+        :param image: Matriz da imagem original
+        :param alternate: Define se a ordem de passagem na matriz vai ser padrão ou alternada (por padrão, alternada)
+        :param threshold: Limiar a ser considerado para o pixel ser branco ou preto
+        :return: nova imagem gerada com a técnica de pontilhado
+        """
 
+        # Gera a nova imagem
+        (height, width) = image.shape
         new_image = np.zeros((height + 1, width + 2), np.float32)
         new_image[0:-1, 1:-1] = image
 
+        # Percorre as linhas
         for row in range(0, height):
 
+            # Define se a linha vai ser percorrida diretamente ou de forma alternada
             if not alternate or row % 2 == 0:
                 order = 1
                 col_range = range(1, width, 1)
@@ -19,6 +29,7 @@ class Dithering:
                 order = -1
                 col_range = range(width, 0, -1)
 
+            # Percorre cada coluna da linha
             for col in col_range:
 
                 # Calcula o novo valor do pixel
@@ -37,6 +48,12 @@ class Dithering:
 
     @staticmethod
     def ordered_dithering(image):
+        """
+        Aplica a técnica de pontilhamento ordenado com matriz 3x3 numa imagem
+        :param image: matriz da imagem a ser aplicada a técnica
+        :return: nova imagem processada, com dimensões 3 vezes maiores que a original
+        """
+        # Define o padrão para cada nível de cinza
         level0 = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
         level1 = np.array([[0, 0, 0], [0, 1, 0], [0, 0, 0]])
         level2 = np.array([[0, 0, 0], [1, 1, 0], [0, 0, 0]])
@@ -54,6 +71,12 @@ class Dithering:
 
     @staticmethod
     def ordered_dithering_bayer(image):
+        """
+        Aplica a técnica de pontilhamento ordenado com a matriz de Bayer (4x4)
+        :param image:  matriz da imagem a ser aplicada a técnica
+        :return: nova imagem processada, com dimensões 4 vezes maiores que a original
+        """
+        # Define o padrão para cada nível de cinza da escala
         level0 = np.array([[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
         level1 = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
         level2 = np.array([[1, 0, 0, 0], [0, 0, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]])
@@ -79,8 +102,16 @@ class Dithering:
 
     @staticmethod
     def __generic_ordered_dithering(image, levels, matrix_size):
+        """
+        Realiza o processo de pontilhamento ordenado
+        :param image: imagem a ser aplicada a técnica
+        :param levels: padrões associados aos níveis de cinza originais
+        :param matrix_size: tamanho da matriz do pontilhamento ordenado
+        :return: nova imagem, processada
+        """
         max_level = matrix_size * matrix_size
 
+        # Cria a nova imagem
         (old_height, old_width) = image.shape
         new_image = np.zeros((old_height * matrix_size, old_width * matrix_size), np.uint8)
 
