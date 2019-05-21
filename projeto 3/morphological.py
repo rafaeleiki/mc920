@@ -27,7 +27,6 @@ class ConnectedComponent:
         self.horizontal_proportions = None
         self.calc_pixels_proportions()
         self.calc_pixels_transitions()
-        self.find_words()
 
     def calc_pixels_proportions(self):
         self.black_pixel = np.sum(self.image[self.y1:self.y2, self.x1:self.x2])
@@ -50,14 +49,18 @@ class ConnectedComponent:
         self.vertical_proportions = self.vertical_transitions / self.black_pixel
         self.horizontal_proportions = self.horizontal_transitions / self.black_pixel
 
-    def find_words(self):
+    def find_words(self, use_threshold=True):
         self.words = []
         spaces = self.find_word_spaces()
 
         space_sizes = [space["size"] for space in spaces]
-        threshold = np.sum(space_sizes) / len(spaces) + 1
 
-        if len(spaces) > 0 and np.std(space_sizes) * 1.2 > threshold:
+        if use_threshold:
+            threshold = np.sum(space_sizes) / len(spaces) + 1
+        else:
+            threshold = 0
+
+        if len(spaces) > 0 and np.std(space_sizes) * 1.2 >= threshold:
             word_start = self.x1
 
             for i in range(len(spaces)):
@@ -65,7 +68,8 @@ class ConnectedComponent:
                     self.words.append((word_start, spaces[i]["start"] - 1))
                     word_start = spaces[i]["end"]
 
-            self.words.append((word_start, self.x2))
+            if word_start != self.x2:
+                self.words.append((word_start, self.x2))
         else:
             self.words.append((self.x1, self.x2))
 
@@ -75,7 +79,7 @@ class ConnectedComponent:
         start = self.x1 - 1
 
         for col in range(self.x1, self.x2 + 1):
-            if np.sum(self.image[self.y1:self.y2, col]) == WHITE * self.dy:
+            if np.sum(self.image[self.y1:self.y2, col]) <= BLACK * self.dy * 0.05:
                 space_count += 1
             else:
                 if space_count > 0:
@@ -84,7 +88,6 @@ class ConnectedComponent:
                         "start": start,
                         "end": start + space_count
                     })
-                    # self.draw_component_rectangle((start+1, start+1+space_count))
                     space_count = 0
                 start = col
 
@@ -182,19 +185,51 @@ class Morphological:
             for line in box_file:
                 if process:
                     x1, y1, x2, y2 = [int(string) for string in line.rstrip().split(", ")]
-                    components.append(ConnectedComponent(normalized_image, x1, y1, x2, y2))
+                    component = ConnectedComponent(normalized_image, x1, y1, x2, y2)
+                    if component.is_text():
+                        components.append(component)
 
                 elif line.find("Number of connected components") >= 0:
                     process = True
 
         # Passo 9 e 10
+
+        # Versão sem operador morfológico
+        # words_count = 0
+        # for component in components:
+        #     component.find_words()
+        #     # component.draw_word_rectangles()
+        #     words_count += len(component.words)
+        # print("Words count: {}".format(words_count))
+
+        # Versão com operador morfológico
+        new_image = np.zeros(img.shape)
+
+        for component in components:
+            y1 = component.y1
+            y2 = component.y2
+            x1 = component.x1
+            x2 = component.x2
+            component_kernel = np.ones((1, math.floor(component.dy * 0.36) + 1), np.uint8)
+            new_image[y1:y2, x1:x2] = cv2.morphologyEx(normalized_image[y1:y2, x1:x2], cv2.MORPH_CLOSE, component_kernel)
+            component.image = new_image
+            component.find_words(False)
+            # component.image = new_image
+            # component.draw_word_rectangles()
+
+        # words_kernel = np.ones((1, 12), np.uint8)
+        # new_image = cv2.morphologyEx(new_image, cv2.MORPH_CLOSE, words_kernel)
+
         words_count = 0
         for component in components:
-            if component.is_text():
-                component.draw_word_rectangles()
-                words_count += len(component.words)
-
+            # component.image = new_image
+            # component.find_words(False)
+            component.image = normalized_image
+            component.draw_word_rectangles()
+            words_count += len(component.words)
         print("Words count: {}".format(words_count))
+
+        cv2.imwrite(intermediate_path.replace(".pbm", "_test.pbm"), new_image)
 
         normalized_image = 1 - normalized_image
         normalized_image *= 255
