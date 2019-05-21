@@ -67,7 +67,8 @@ class Morphological:
 
         # Passo 9 e 10
         if use_morphologic:
-            self.__find_words_using_morphological_filter(normalized_image, components)
+            a = self.__find_words_using_morphological_filter(normalized_image, components)
+            cv2.imwrite(output_path.replace(".pbm", "_aaa.pbm"), a)
         else:
             self.__find_words_using_algorithm(components)
 
@@ -91,7 +92,7 @@ class Morphological:
             y2 = component.y2
             x1 = component.x1
             x2 = component.x2
-            component_kernel = np.ones((1, math.floor(component.dy * 0.36) + 1), np.uint8)
+            component_kernel = np.ones((2 * component.dy, math.ceil(component.dy * 0.22 + 0.62)), np.uint8)
             new_image[y1:y2, x1:x2] = cv2.morphologyEx(image[y1:y2, x1:x2], cv2.MORPH_CLOSE, component_kernel)
             component.image = new_image
             component.find_words(False)
