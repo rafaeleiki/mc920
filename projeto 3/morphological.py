@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import subprocess
+import math
 
 WHITE = 0
 BLACK = 1
@@ -14,7 +15,10 @@ class ConnectedComponent:
         self.y1 = y1
         self.x2 = x2
         self.y2 = y2
-        self.area = (x2 - x1) * (y2 - y1)
+        self.dx = x2 - x1
+        self.dy = y2 - y1
+        self.area = self.dx * self.dy
+        self.words = []
         self.black_pixel = None
         self.black_pixel_proportion = None
         self.vertical_transitions = None
@@ -23,6 +27,7 @@ class ConnectedComponent:
         self.horizontal_proportions = None
         self.calc_pixels_proportions()
         self.calc_pixels_transitions()
+        self.find_words()
 
     def calc_pixels_proportions(self):
         self.black_pixel = np.sum(self.image[self.y1:self.y2, self.x1:self.x2])
@@ -33,29 +38,83 @@ class ConnectedComponent:
         self.horizontal_transitions = 0.0
 
         for row in range(self.y1, self.y2):
-            for col in range(self.x1, self.x2):
+            for col in range(self.x1, self.x2 + 1):
                 if self.image[row, col] == WHITE and self.image[row + 1, col] == BLACK:
                     self.vertical_transitions += 1
 
         for col in range(self.x1, self.x2):
-            for row in range(self.y1, self.y2):
+            for row in range(self.y1, self.y2 + 1):
                 if self.image[row, col] == WHITE and self.image[row, col + 1] == BLACK:
                     self.horizontal_transitions += 1
 
         self.vertical_proportions = self.vertical_transitions / self.black_pixel
         self.horizontal_proportions = self.horizontal_transitions / self.black_pixel
 
-    def draw_component_rectangle(self):
-        for col in range(self.x1, self.x2):
-            self.image[self.y1, col] = BLACK
-            self.image[self.y2, col] = BLACK
+    def find_words(self):
+        self.words = []
+        spaces = self.find_word_spaces()
 
-        for row in range(self.y1, self.y2):
-            self.image[row, self.x1] = BLACK
-            self.image[row, self.x2] = BLACK
+        space_sizes = [space["size"] for space in spaces]
+        threshold = np.sum(space_sizes) / len(spaces) + 1
+
+        if len(spaces) > 0 and np.std(space_sizes) * 1.2 > threshold:
+            word_start = self.x1
+
+            for i in range(len(spaces)):
+                if spaces[i]["size"] >= threshold:
+                    self.words.append((word_start, spaces[i]["start"] - 1))
+                    word_start = spaces[i]["end"]
+
+            self.words.append((word_start, self.x2))
+        else:
+            self.words.append((self.x1, self.x2))
+
+    def find_word_spaces(self):
+        spaces = []
+        space_count = 0
+        start = self.x1 - 1
+
+        for col in range(self.x1, self.x2 + 1):
+            if np.sum(self.image[self.y1:self.y2, col]) == WHITE * self.dy:
+                space_count += 1
+            else:
+                if space_count > 0:
+                    spaces.append({
+                        "size": space_count,
+                        "start": start,
+                        "end": start + space_count
+                    })
+                    # self.draw_component_rectangle((start+1, start+1+space_count))
+                    space_count = 0
+                start = col
+
+        if space_count > 0:
+            spaces.append({
+                "size": space_count,
+                "start": start,
+                "end": start + space_count
+            })
+
+        return spaces
+
+    def draw_component_rectangle(self, rect):
+        x1 = rect[0]
+        x2 = rect[1]
+
+        y1 = self.y1
+        y2 = self.y2
+
+        for col in range(x1, x2 + 1):
+            self.image[y1, col] = BLACK
+            self.image[y2, col] = BLACK
+
+        for row in range(y1, y2 + 1):
+            self.image[row, x1] = BLACK
+            self.image[row, x2] = BLACK
 
     def draw_word_rectangles(self):
-        return 1
+        for word in self.words:
+            self.draw_component_rectangle(word)
 
     def is_text(self):
         return (
@@ -129,13 +188,13 @@ class Morphological:
                     process = True
 
         # Passo 9 e 10
+        words_count = 0
         for component in components:
             if component.is_text():
-                component.draw_component_rectangle()
-                print("{}, {} - b={}, a={}".format(component.vertical_proportions, component.horizontal_proportions,
-                                                   component.black_pixel_proportion, component.area))
-            else:
-                pass
+                component.draw_word_rectangles()
+                words_count += len(component.words)
+
+        print("Words count: {}".format(words_count))
 
         normalized_image = 1 - normalized_image
         normalized_image *= 255
