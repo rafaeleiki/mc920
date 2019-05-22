@@ -7,84 +7,108 @@ from connected_component import ConnectedComponent
 
 class Morphological:
 
-    def analyze_text_image(self, input_path, output_path, use_morphologic=True):
-        img = cv2.imread(input_path, 0)
-        img = np.invert(img)
+    @staticmethod
+    def analyze_text_image(image, use_morphological=True):
+        original_image = np.invert(image)
+        max_value = original_image.max()
+        normalized_image = original_image / max_value
 
-        # Passo 1: dilatação
-        kernel1 = np.ones((1, 100), np.uint8)
-        result1 = cv2.dilate(img, kernel1)
-        cv2.imshow('1', result1)
+        result1 = Morphological.__steps_1_and_2(original_image)     # Passo 1 e 2: dilatação e erosão horizontal
+        result3 = Morphological.__steps_3_and_4(original_image)     # Passo 3 e 4: dilatação e erosão vertical
+        result5 = cv2.bitwise_and(result1, result3)                 # Passo 5: intersecção
+        result6 = Morphological.__step_6(result5)                   # Passo 6: fechamento
+        rectangles_file_path = Morphological.__step_7(result6)      # Passo 7: detecção de componentes
 
-        # Passo 2: erosão
-        result1 = cv2.erode(result1, kernel1)
-        cv2.imshow('2', result1)
+        # Passo 8 e 9: definição de componentes de texto
+        components = Morphological.__steps_8_and_9(normalized_image, rectangles_file_path)
 
-        # Passo 3: dilatação
-        kernel3 = np.ones((200, 1), np.uint8)
-        result3 = cv2.dilate(img, kernel3)
-        cv2.imshow('3', result3)
+        # Passo 10
+        words_count = Morphological.__step_10(normalized_image, components, use_morphological)
+        lines_count = len(components)
 
-        # Passo 4: erosão
-        result3 = cv2.erode(result3, kernel3)
-        cv2.imshow('4', result3)
+        # Volta a imagem para a escala original
+        normalized_image = 1 - normalized_image
+        normalized_image *= max_value
 
-        # Passo 5: intersecção
-        result5 = cv2.bitwise_and(result1, result3)
-        cv2.imshow('5', result5)
+        return normalized_image, lines_count, words_count
 
-        # Passo 6: fechamento
-        kernel6 = np.ones((1, 30), np.uint8)
-        result6 = cv2.morphologyEx(result5, cv2.MORPH_CLOSE, kernel6)
+    @staticmethod
+    def __steps_1_and_2(original_image):
+        kernel = np.ones((1, 100), np.uint8)
+        image = cv2.dilate(original_image, kernel)     # Passo 1
+        image = cv2.erode(image, kernel)               # Passo 2
+        return image
+
+    @staticmethod
+    def __steps_3_and_4(original_image):
+        kernel = np.ones((200, 1), np.uint8)
+        image = cv2.dilate(original_image, kernel)  # Passo 3
+        image = cv2.erode(image, kernel)            # Passo 4
+        return image
+
+    @staticmethod
+    def __step_6(result5):
+        kernel = np.ones((1, 30), np.uint8)
+        image = cv2.morphologyEx(result5, cv2.MORPH_CLOSE, kernel)
+        return image
+
+    @staticmethod
+    def __step_7(result6):
         result6 = np.invert(result6)
-
-        intermediate_path = output_path.replace(".pbm", "_intermediate.pbm")
+        intermediate_path = './intermediate.pbm'
         cv2.imwrite(intermediate_path, result6)
 
-        # Passo 7
         subprocess.call(["gcc", "comp_conexos.c"])
         box_file_path = intermediate_path + ".tmp"
         intermediate_output_path = intermediate_path.replace(".pbm", "_out.pbm")
         with open(box_file_path, "w") as box_file:
             subprocess.call(["./a.out", intermediate_path, intermediate_output_path], stdout=box_file)
+        return box_file_path
 
-        # Passo 8
+    @staticmethod
+    def __steps_8_and_9(image, rectangles_file_path):
         components = []
-        normalized_image = img / img.max()
 
-        with open(box_file_path, "r") as box_file:
+        with open(rectangles_file_path, "r") as rectangles_file:
             process = False
 
-            for line in box_file:
+            for line in rectangles_file:
+
+                # Encontrou a linha que começa os retângulos
                 if process:
                     x1, y1, x2, y2 = [int(string) for string in line.rstrip().split(", ")]
-                    component = ConnectedComponent(normalized_image, x1, y1, x2, y2)
+
+                    # Passo 8: calcula as razões de pixels
+                    component = ConnectedComponent(image, x1, y1, x2, y2)
+
+                    # Passo 9: classificação como texto
                     if component.is_text():
                         components.append(component)
 
+                # Vai avançando no arquivo até encontrar os retângulos
                 elif line.find("Number of connected components") >= 0:
                     process = True
 
-        # Passo 9 e 10
-        if use_morphologic:
-            a = self.__find_words_using_morphological_filter(normalized_image, components)
-            cv2.imwrite(output_path.replace(".pbm", "_aaa.pbm"), a)
-        else:
-            self.__find_words_using_algorithm(components)
+        return components
 
-        # Desenha retângulos e conta palavras
+    @staticmethod
+    def __step_10(image, components, use_morphological):
+        # Passo 10a: classificação em palavras
+        if use_morphological:
+            Morphological.__find_words_using_morphological_filter(image, components)
+        else:
+            Morphological.__find_words_using_algorithm(components)
+
+        # Passo 10b: desenho dos retângulos e contagem das palavras
         words_count = 0
         for component in components:
             component.draw_word_rectangles()
             words_count += len(component.words)
 
-        normalized_image = 1 - normalized_image
-        normalized_image *= 255
-        cv2.imwrite(output_path, normalized_image)
+        return words_count
 
-        print("Finished \"{}\", {} words found".format(output_path, words_count))
-
-    def __find_words_using_morphological_filter(self, image, components):
+    @staticmethod
+    def __find_words_using_morphological_filter(image, components):
         new_image = np.zeros(image.shape)
 
         for component in components:
@@ -100,6 +124,7 @@ class Morphological:
 
         return new_image
 
-    def __find_words_using_algorithm(self, components):
+    @staticmethod
+    def __find_words_using_algorithm(components):
         for component in components:
             component.find_words()
