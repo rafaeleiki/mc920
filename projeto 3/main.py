@@ -12,11 +12,15 @@ def generate_example():
     ImageManager.analyze_image('./pictures/math_emporium.pbm', './results/math_7.pbm')
     ImageManager.analyze_image('./pictures/scs.ascii.pbm', './results/scs_7.pbm')
 
+
 def main():
     """
     """
-    use_morphological = sys.argv.index("-a") < 0
-    ImageManager.analyze_image(sys.argv[1], sys.argv[2], use_morphological)
+    if sys.argv[1] == 'example':
+        generate_example()
+    else:
+        use_morphological = "-a" not in sys.argv
+        ImageManager.analyze_image(sys.argv[1], sys.argv[2], use_morphological)
 
 
 if __name__ == '__main__':
