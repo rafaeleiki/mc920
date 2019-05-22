@@ -9,6 +9,12 @@ class Morphological:
 
     @staticmethod
     def analyze_text_image(image, use_morphological=True):
+        """
+        Analisa um texto, encontrando palavras e linhas e contornando as palavras
+        :param image: imagem a ser analisada
+        :param use_morphological: define se deve ser usado o operador morfológico para classificar em palavras
+        :return: imagem com os retângulos, quantidade de linhas e quantidade de palavras
+        """
         original_image = np.invert(image)
         max_value = original_image.max()
         normalized_image = original_image / max_value
@@ -34,6 +40,11 @@ class Morphological:
 
     @staticmethod
     def __steps_1_and_2(original_image):
+        """
+        Executa dilatação e erosão horizontal
+        :param original_image: imagem a ser aplicada
+        :return: resultado da operação
+        """
         kernel = np.ones((1, 100), np.uint8)
         image = cv2.dilate(original_image, kernel)     # Passo 1
         image = cv2.erode(image, kernel)               # Passo 2
@@ -41,6 +52,11 @@ class Morphological:
 
     @staticmethod
     def __steps_3_and_4(original_image):
+        """
+        Executa dilatação e erosão vertical
+        :param original_image: imagem a ser aplicada
+        :return: resultado da operação
+        """
         kernel = np.ones((200, 1), np.uint8)
         image = cv2.dilate(original_image, kernel)  # Passo 3
         image = cv2.erode(image, kernel)            # Passo 4
@@ -48,12 +64,22 @@ class Morphological:
 
     @staticmethod
     def __step_6(result5):
+        """
+        Executa o fechamento da imagem
+        :param result5: imagem a ser aplicada
+        :return: resultado da operação
+        """
         kernel = np.ones((1, 30), np.uint8)
         image = cv2.morphologyEx(result5, cv2.MORPH_CLOSE, kernel)
         return image
 
     @staticmethod
     def __step_7(result6):
+        """
+        Encontra as componentes conexas da imagem
+        :param result6: imagem a ser procurada
+        :return: path do arquivo com os retângulos de cada componente
+        """
         result6 = np.invert(result6)
         intermediate_path = './intermediate.pbm'
         cv2.imwrite(intermediate_path, result6)
@@ -67,6 +93,12 @@ class Morphological:
 
     @staticmethod
     def __steps_8_and_9(image, rectangles_file_path):
+        """
+        Classifica as componentes conexas de uma imagem em textuais ou não
+        :param image: imagem a ser analisada
+        :param rectangles_file_path: caminho do arquivo com os retângulos
+        :return: componentes textuais encontradas
+        """
         components = []
 
         with open(rectangles_file_path, "r") as rectangles_file:
@@ -93,6 +125,13 @@ class Morphological:
 
     @staticmethod
     def __step_10(image, components, use_morphological):
+        """
+        Encontra as palavras nas linhas
+        :param image: imagem procurada
+        :param components: componentes conexas textuais
+        :param use_morphological: define se deve ser usado o operador morfológico
+        :return: quantidade de palavras encontradas
+        """
         # Passo 10a: classificação em palavras
         if use_morphological:
             Morphological.__find_words_using_morphological_filter(image, components)
@@ -109,6 +148,12 @@ class Morphological:
 
     @staticmethod
     def __find_words_using_morphological_filter(image, components):
+        """
+        Encontra as palavras na imagem com o operador morfológico
+        :param image: imagem a ser procurada
+        :param components: componentes textuais
+        :return: imagem resultante
+        """
         new_image = np.zeros(image.shape)
 
         for component in components:
@@ -116,6 +161,8 @@ class Morphological:
             y2 = component.y2
             x1 = component.x1
             x2 = component.x2
+
+            # Realiza o fechamento e procura as divisões entre palavras
             component_kernel = np.ones((2 * component.dy, math.ceil(component.dy * 0.22 + 0.62)), np.uint8)
             new_image[y1:y2, x1:x2] = cv2.morphologyEx(image[y1:y2, x1:x2], cv2.MORPH_CLOSE, component_kernel)
             component.image = new_image
@@ -126,5 +173,9 @@ class Morphological:
 
     @staticmethod
     def __find_words_using_algorithm(components):
+        """
+        Encontra as palavras na imagem usando um limiar
+        :param components: componentes conexas textuais
+        """
         for component in components:
             component.find_words()
