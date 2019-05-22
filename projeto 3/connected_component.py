@@ -27,7 +27,11 @@ class ConnectedComponent:
 
     def calc_pixels_proportions(self):
         self.black_pixel = np.sum(self.image[self.y1:self.y2, self.x1:self.x2])
-        self.black_pixel_proportion = self.black_pixel / self.area
+
+        if self.black_pixel == 0:
+            self.black_pixel_proportion = 0
+        else:
+            self.black_pixel_proportion = self.black_pixel / self.area
 
     def calc_pixels_transitions(self):
         self.vertical_transitions = 0.0
@@ -43,8 +47,12 @@ class ConnectedComponent:
                 if self.image[row, col] == WHITE and self.image[row, col + 1] == BLACK:
                     self.horizontal_transitions += 1
 
-        self.vertical_proportions = self.vertical_transitions / self.black_pixel
-        self.horizontal_proportions = self.horizontal_transitions / self.black_pixel
+        if self.black_pixel == 0:
+            self.vertical_proportions = 0
+            self.horizontal_proportions = 0
+        else:
+            self.vertical_proportions = self.vertical_transitions / self.black_pixel
+            self.horizontal_proportions = self.horizontal_transitions / self.black_pixel
 
     def find_words(self, use_threshold=True):
         self.words = []
