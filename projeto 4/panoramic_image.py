@@ -24,7 +24,7 @@ class PanoramicImage:
         key_points = orb.detect(self.image, None)
         self.key_points, self.descriptor = orb.compute(self.image, key_points)
 
-    def compare_orb_match(self, other_image: 'PanoramicImage', threshold: float):
+    def compare_orb_match(self, other_image: 'PanoramicImage', threshold: int):
         bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         matches = bf.match(self.descriptor, other_image.descriptor)
 
@@ -41,18 +41,16 @@ class PanoramicImage:
             points2 = np.float32([other_image.key_points[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2)
 
             M, mask = cv2.findHomography(points1, points2, cv2.RANSAC, 5.0)
-            # matchesMask = mask.ravel().tolist()
 
             last_row = self.image.shape[0] - 1
             last_col = self.image.shape[1] - 1
-            pts = np.float32([[0, 0], [0, last_row], [last_col, last_row], [last_col, 0]]).reshape(-1, 1, 2)
-            dst = cv2.perspectiveTransform(pts, M)
+            points = np.float32([[0, 0], [0, last_row], [last_col, last_row], [last_col, 0]]).reshape(-1, 1, 2)
+            dst = cv2.perspectiveTransform(points, M)
 
             image = cv2.polylines(other_image.image, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
 
         else:
-            print("Not enough matches are found - %d/%d" % (len(matches), min_matches))
-            # matchesMask = None
+            print("Imagens não são similares o suficiente - %d/%d" % (len(matches), min_matches))
 
         return image, M
 
@@ -62,11 +60,11 @@ class PanoramicImage:
         rows_2 = other_image.image.shape[0]
         cols_2 = other_image.image.shape[1]
 
-        result_image_rows = rows_1
+        result_image_rows = max(rows_1, rows_2)
         result_image_cols = cols_1 + cols_2
 
         result = cv2.warpPerspective(self.image, M, (result_image_cols, result_image_rows))
-        result[0:rows_2, 0:cols_2] = other_image.image
+        result[0:result_image_rows, 0:cols_2] = other_image.image
 
         return result
 
