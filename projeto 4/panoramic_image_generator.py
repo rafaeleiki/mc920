@@ -19,6 +19,8 @@ class PanoramicImageGenerator:
         image1 = PanoramicImage(image_1_path)
         image2 = PanoramicImage(image_2_path)
 
+        base_path = self.result_dir + result_filename
+
         # Passo 1
         gray_image_1 = image1.image = image1.to_gray_scale()
         gray_image_2 = image2.image = image2.to_gray_scale()
@@ -36,6 +38,8 @@ class PanoramicImageGenerator:
         image2.reset_to_original_image()
 
         image_with_lines = image1.image_matches(image2)
+        image_with_lines.image_path = base_path + '_lines.jpeg'
+        image_with_lines.save()
 
         image1.image = gray_image_1
         image2.image = gray_image_2
@@ -58,12 +62,7 @@ class PanoramicImageGenerator:
                 image2.reset_to_original_image()
                 panoramic_image = image1.merge_panoramic(image2, homography_matrix)
 
-                # Escreve os resultados em arquivo
-                base_path = self.result_dir + result_filename
-
-                image_with_lines.image_path = base_path + '_lines.jpeg'
-                image_with_lines.save()
-
+                # Escreve a imagem resultante
                 panoramic_image.image_path = base_path + '_panoramic.jpeg'
                 panoramic_image.crop_borders()
                 panoramic_image.save()

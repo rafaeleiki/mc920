@@ -71,7 +71,8 @@ class PanoramicImage:
         matches = bf.match(self.descriptor, other_image.descriptor)
 
         result = np.zeros(shape=(self.image.shape[0], self.image.shape[1] + other_image.image.shape[1]))
-        result = cv2.drawMatches(self.image, self.key_points, other_image.image, other_image.key_points, matches[:max_draw], result, flags=2)
+        draw_params = dict(matchColor=(0, 0, 255), singlePointColor=(0, 255, 0), flags=0)
+        result = cv2.drawMatches(self.image, self.key_points, other_image.image, other_image.key_points, matches[:max_draw], result, **draw_params)
 
         image_matches = PanoramicImage()
         image_matches.image = result
