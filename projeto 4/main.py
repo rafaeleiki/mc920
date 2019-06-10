@@ -15,7 +15,7 @@ def generate_example(threshold):
         generator = PanoramicImageGenerator(algorithm, './results/{0}/'.format(algorithm_name), threshold)
 
         # Gera todas as imagens de exemplo
-        for i in range(1, 6):
+        for i in range(1, 7):
             base_filename = "./pictures/foto{0}".format(i)
             generator.generate_image(base_filename + "A.jpg", base_filename + "B.jpg", 'foto{0}'.format(i))
 

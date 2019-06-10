@@ -49,17 +49,21 @@ class PanoramicImageGenerator:
         else:
             homography_matrix = image1.ransac_matrix(image2, matches)
 
-            # Passos 6 e 7
-            image1.reset_to_original_image()
-            image2.reset_to_original_image()
-            panoramic_image = image1.merge_panoramic(image2, homography_matrix)
+            if homography_matrix is None:
+                print("Erro na matriz de homografia")
+            else:
 
-            # Escreve os resultados em arquivo
-            base_path = self.result_dir + result_filename
+                # Passos 6 e 7
+                image1.reset_to_original_image()
+                image2.reset_to_original_image()
+                panoramic_image = image1.merge_panoramic(image2, homography_matrix)
 
-            image_with_lines.image_path = base_path + '_lines.jpeg'
-            image_with_lines.save()
+                # Escreve os resultados em arquivo
+                base_path = self.result_dir + result_filename
 
-            panoramic_image.image_path = base_path + '_panoramic.jpeg'
-            panoramic_image.crop_borders()
-            panoramic_image.save()
+                image_with_lines.image_path = base_path + '_lines.jpeg'
+                image_with_lines.save()
+
+                panoramic_image.image_path = base_path + '_panoramic.jpeg'
+                panoramic_image.crop_borders()
+                panoramic_image.save()
