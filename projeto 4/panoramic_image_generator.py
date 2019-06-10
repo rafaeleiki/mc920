@@ -6,12 +6,18 @@ from panoramic_image import PanoramicImage
 
 class PanoramicImageGenerator:
 
-    def __init__(self, algorithm: Algorithm, result_dir: str, threshold: int):
+    def __init__(self, algorithm: Algorithm, result_dir: str, threshold: float):
         self.algorithm = algorithm
         self.result_dir = result_dir
         self.threshold = threshold
 
-    def generate_image(self, image_1_path: str, image_2_path: str, result_filename: str):
+    def generate_image(self, image_1_path: str, image_2_path: str, result_filename: str) -> None:
+        """
+        Gera uma image panorâmica
+        :param image_1_path: caminho para a primeira imagem
+        :param image_2_path: caminho para a segunda imagem
+        :param result_filename: nome base do arquivo de imagem resultante
+        """
         image1 = PanoramicImage(image_1_path)
         image2 = PanoramicImage(image_2_path)
 
@@ -37,20 +43,18 @@ class PanoramicImageGenerator:
         image2.image = gray_image_2
 
         # Passo 5
+        # Se teve a quantidade mínima de matches, continua
         min_matches = 4
-        _, M = image1.ransac_matches(image2, matches, min_matches)
-
-        # Caso em que as imagens não são semelhantes o bastante para uni-las
-        if M is None:
+        if len(matches) < min_matches:
             print("As imagens não são semelhantes o suficiente, %d (esperado %d)" % (len(matches), min_matches))
 
-        # Tem a quantidade mínima de semelhanças exigida
         else:
+            homography_matrix = image1.ransac_matrix(image2, matches)
 
             # Passos 6 e 7
             image1.reset_to_original_image()
             image2.reset_to_original_image()
-            panoramic_image = image1.panoramic_merge(image2, M)
+            panoramic_image = image1.merge_panoramic(image2, homography_matrix)
 
             # Escreve os resultados em arquivo
             base_path = self.result_dir + result_filename
