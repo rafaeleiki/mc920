@@ -1,10 +1,13 @@
 import cv2
+
+from algorithms import Algorithm
 from panoramic_image import PanoramicImage
 
 
 class PanoramicImageGenerator:
 
-    def __init__(self, result_dir: str, threshold: int):
+    def __init__(self, algorithm: Algorithm, result_dir: str, threshold: int):
+        self.algorithm = algorithm
         self.result_dir = result_dir
         self.threshold = threshold
 
@@ -17,13 +20,14 @@ class PanoramicImageGenerator:
         gray_image_2 = image2.image = image2.to_gray_scale()
 
         # Passo 2
-        image1.orb()
-        image2.orb()
+        self.algorithm.set_descriptor(image1)
+        self.algorithm.set_descriptor(image2)
 
         # Passos 3 e 4
-        matches = image1.compare_orb_match(image2, self.threshold)
+        matches = self.algorithm.get_matches(image1, image2, self.threshold)
 
         # Desenha a imagem do passo 8s
+        # Volta para a imagem colorida antes de desenhar
         image1.reset_to_original_image()
         image2.reset_to_original_image()
 
@@ -33,14 +37,22 @@ class PanoramicImageGenerator:
         image2.image = gray_image_2
 
         # Passo 5
-        _, M = image1.ransac_matches(image2, matches, 10)
+        min_matches = 4
+        _, M = image1.ransac_matches(image2, matches, min_matches)
 
-        # Passos 6 e 7
-        image1.reset_to_original_image()
-        image2.reset_to_original_image()
-        panoramic_image = image1.panoramic_merge(image2, M)
+        # Caso em que as imagens não são semelhantes o bastante para uni-las
+        if M is None:
+            print("As imagens não são semelhantes o suficiente, %d (esperado %d)" % (len(matches), min_matches))
 
-        # Escreve os resultados em arquivo
-        base_path = self.result_dir + result_filename
-        cv2.imwrite(base_path + '_lines.jpeg', image_with_lines)
-        cv2.imwrite(base_path + '_panoramic.jpeg', panoramic_image)
+        # Tem a quantidade mínima de semelhanças exigida
+        else:
+
+            # Passos 6 e 7
+            image1.reset_to_original_image()
+            image2.reset_to_original_image()
+            panoramic_image = image1.panoramic_merge(image2, M)
+
+            # Escreve os resultados em arquivo
+            base_path = self.result_dir + result_filename
+            cv2.imwrite(base_path + '_lines.jpeg', image_with_lines)
+            cv2.imwrite(base_path + '_panoramic.jpeg', panoramic_image)

@@ -19,13 +19,12 @@ class PanoramicImage:
     def to_gray_scale(self):
         return cv2.cvtColor(self.image, cv2.COLOR_BGR2GRAY)
 
-    def orb(self) -> None:
-        orb = cv2.ORB_create()
-        key_points = orb.detect(self.image, None)
-        self.key_points, self.descriptor = orb.compute(self.image, key_points)
+    def sift(self) -> None:
+        sift = cv2.SIFT()
+        self.key_points = sift.detect(self.image, None)
 
-    def compare_orb_match(self, other_image: 'PanoramicImage', threshold: int):
-        bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
+    def compare_sift_match(self, other_image: 'PanoramicImage', threshold: int):
+        bf = cv2.BFMatcher(cv2.NORM_L2, crossCheck=True)
         matches = bf.match(self.descriptor, other_image.descriptor)
 
         # Mantém só as melhores correspondências
@@ -49,9 +48,6 @@ class PanoramicImage:
 
             image = cv2.polylines(other_image.image, [np.int32(dst)], True, 255, 3, cv2.LINE_AA)
 
-        else:
-            print("Imagens não são similares o suficiente - %d/%d" % (len(matches), min_matches))
-
         return image, M
 
     def panoramic_merge(self, other_image: 'PanoramicImage', M):
@@ -68,9 +64,9 @@ class PanoramicImage:
 
         return result
 
-    def image_matches(self, other_image: 'PanoramicImage'):
+    def image_matches(self, other_image: 'PanoramicImage', max_draw=15):
         bf = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
         matches = bf.match(self.descriptor, other_image.descriptor)
         result = np.zeros(shape=(self.image.shape[0], self.image.shape[1] + other_image.image.shape[1]))
-        result = cv2.drawMatches(self.image, self.key_points, other_image.image, other_image.key_points, matches, result, flags=2)
+        result = cv2.drawMatches(self.image, self.key_points, other_image.image, other_image.key_points, matches[:max_draw], result, flags=2)
         return result
