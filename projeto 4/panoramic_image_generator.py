@@ -1,5 +1,3 @@
-import cv2
-
 from algorithms import Algorithm
 from panoramic_image import PanoramicImage
 
@@ -58,5 +56,10 @@ class PanoramicImageGenerator:
 
             # Escreve os resultados em arquivo
             base_path = self.result_dir + result_filename
-            cv2.imwrite(base_path + '_lines.jpeg', image_with_lines)
-            cv2.imwrite(base_path + '_panoramic.jpeg', panoramic_image)
+
+            image_with_lines.image_path = base_path + '_lines.jpeg'
+            image_with_lines.save()
+
+            panoramic_image.image_path = base_path + '_panoramic.jpeg'
+            panoramic_image.crop_borders()
+            panoramic_image.save()
