@@ -1,4 +1,6 @@
-.DS_Store
-
+lib/
+bin/
+__pycache__/
 .idea
-__pycache__
+.DS_Store
+Mc920
