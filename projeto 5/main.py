@@ -15,7 +15,7 @@ def generate_example():
     ]
 
     # Gera para cada quantidade de cor
-    for color_count in [16, 32, 64, 128]:
+    for color_count in [8, 16, 32, 64, 128]:
         for image in example_image_list:
             (file, file_format) = image
             params = {"file": file, "format": file_format, "color_count": color_count}
